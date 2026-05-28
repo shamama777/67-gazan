@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vapor - Магазин игр, библиотека и развлечения</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Main Styleheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Favicon (using SVG inline for custom logo) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%2366c0f4%22/><circle cx=%2250%22 cy=%2250%22 r=%2225%22 fill=%22%23171a21%22/><circle cx=%2240%22 cy=%2240%22 r=%2210%22 fill=%22%2366c0f4%22/></svg>">
+</head>
+<body>
+    <!-- Background Canvas for futuristic ambient particles -->
+    <canvas id="ambient-particles" class="ambient-canvas"></canvas>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <!-- Logo -->
+                <div class="logo" id="logo-btn">
+                    <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#107c10" />
+                                <stop offset="50%" stop-color="#1b2838" />
+                                <stop offset="100%" stop-color="#66c0f4" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M50 15 C30.7 15 15 30.7 15 50 C15 62.5 21.6 73.5 31.4 79.7 L41.2 59.8 C38.3 57.5 36.4 54 36.4 50 C36.4 42.5 42.5 36.4 50 36.4 C57.5 36.4 63.6 42.5 63.6 50 C63.6 54 61.7 57.5 58.8 59.8 L68.6 79.7 C78.4 73.5 85 62.5 85 50 C85 30.7 69.3 15 50 15 Z" fill="url(#logoGrad)" />
+                        <circle cx="50" cy="50" r="10" fill="#66c0f4" class="logo-inner-dot"/>
+                    </svg>
+                    <span class="logo-text">VAPOR</span>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="nav-links">
+                    <button class="nav-tab active" data-target="store">МАГАЗИН</button>
+                    <button class="nav-tab" data-target="library">БИБЛИОТЕКА</button>
+                    <button class="nav-tab" data-target="profile">ПРОФИЛЬ</button>
+                </nav>
+
+                <!-- Top Right Utilities -->
+                <div class="header-utils">
+                    <!-- Sound Toggle -->
+                    <button class="util-btn" id="sound-toggle" title="Включить/выключить звук">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        </svg>
+                    </button>
+
+                    <!-- Cart button -->
+                    <button class="cart-btn" id="cart-nav-btn">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <span class="cart-badge">0</span>
+                    </button>
+
+                    <!-- Wallet display -->
+                    <div class="wallet-display" id="wallet-btn">
+                        <span class="wallet-label">Баланс:</span>
+                        <span class="wallet-amount" id="wallet-val">₽1500.00</span>
+                    </div>
+
+                    <!-- User status thumbnail -->
+                    <div class="user-pill" id="user-pill-btn">
+                        <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Gamer" alt="Avatar" class="avatar-pill" id="header-avatar">
+                        <span class="username-pill" id="header-username">VaporPlayer</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="app-main">
+            <!-- 1. STORE VIEW -->
+            <section id="store-view" class="view-section active">
+                <!-- Hero Featured Game Carousel -->
+                <div class="hero-carousel" id="featured-carousel">
+                    <!-- Dynamic Featured Content from store.js -->
+                </div>
+
+                <!-- Store Filtering & Search -->
+                <div class="store-controls">
+                    <div class="search-bar-container">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="store-search" placeholder="Поиск по названию или тегам...">
+                    </div>
+                    <div class="genre-filter">
+                        <button class="genre-btn active" data-genre="all">Все</button>
+                        <button class="genre-btn" data-genre="action">Экшены</button>
+                        <button class="genre-btn" data-genre="arcade">Аркады</button>
+                        <button class="genre-btn" data-genre="puzzle">Головоломки</button>
+                    </div>
+                </div>
+
+                <!-- Store Game Grid -->
+                <div class="store-grid-section">
+                    <h2 class="section-title">В центре внимания</h2>
+                    <div class="game-grid" id="store-game-grid">
+                        <!-- Dynamic Games Grid from store.js -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. LIBRARY VIEW -->
+            <section id="library-view" class="view-section">
+                <div class="library-layout">
+                    <!-- Library Sidebar List -->
+                    <aside class="library-sidebar">
+                        <div class="sidebar-header">
+                            <span class="list-title">Мои Игры (<span id="library-count">0</span>)</span>
+                        </div>
+                        <ul class="library-list" id="library-games-list">
+                            <!-- Dynamic Game Items from library.js -->
+                        </ul>
+                    </aside>
+
+                    <!-- Library Main Panel -->
+                    <div class="library-main" id="library-main-panel">
+                        <!-- Empty Library Prompt -->
+                        <div class="empty-library-prompt" id="empty-library">
+                            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect>
+                                <path d="M12 18h.01M8 14h.01M16 14h.01M8 10h.01M12 10h.01M16 10h.01M8 6h.01M12 6h.01M16 6h.01"></path>
+                            </svg>
+                            <h3>В вашей библиотеке пока пусто</h3>
+                            <p>Перейдите в Магазин, чтобы выбрать и активировать крутые игры бесплатно или за виртуальный баланс!</p>
+                            <button class="btn btn-primary nav-redirect-btn" data-target="store">В Магазин</button>
+                        </div>
+
+                        <!-- Active Library Game Content -->
+                        <div class="library-game-details" id="library-active-game" style="display: none;">
+                            <!-- Banner Cover Background -->
+                            <div class="game-banner-bg" id="lib-banner-bg"></div>
+                            
+                            <div class="game-banner-content">
+                                <div class="game-banner-meta">
+                                    <h1 class="lib-game-title" id="lib-game-title">Название игры</h1>
+                                    <div class="lib-game-tags" id="lib-game-tags">
+                                        <!-- tags -->
+                                    </div>
+                                </div>
+                                <div class="lib-game-actions">
+                                    <button class="btn btn-play" id="btn-play-game">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" class="play-icon">
+                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                        </svg>
+                                        ИГРАТЬ
+                                    </button>
+                                    <div class="lib-stats">
+                                        <div class="lib-stat-item">
+                                            <span class="stat-label">Время в игре</span>
+                                            <span class="stat-value" id="lib-stat-time">0 ч. 0 мин.</span>
+                                        </div>
+                                        <div class="lib-stat-item">
+                                            <span class="stat-label">Достижения</span>
+                                            <span class="stat-value" id="lib-stat-achievements">0 / 0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="library-game-body">
+                                <!-- Column Left: Achievements -->
+                                <div class="lib-body-left">
+                                    <div class="lib-panel achievements-panel">
+                                        <h3 class="panel-header">Достижения в игре</h3>
+                                        <div class="achievement-progress-bar-container">
+                                            <div class="achievement-progress-bar" id="lib-achievements-progress" style="width: 0%;"></div>
+                                        </div>
+                                        <ul class="achievements-list" id="lib-achievements-list">
+                                            <!-- dynamic list of achievements -->
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Column Right: Game Description & Reviews link -->
+                                <div class="lib-body-right">
+                                    <div class="lib-panel game-info-panel">
+                                        <h3 class="panel-header">Информация</h3>
+                                        <div class="info-content">
+                                            <p id="lib-game-desc">Описание игры...</p>
+                                            <div class="spec-divider"></div>
+                                            <div class="lib-quick-specs">
+                                                <div class="spec-row"><strong>Разработчик:</strong> <span id="lib-game-dev">Vapor Labs</span></div>
+                                                <div class="spec-row"><strong>Жанр:</strong> <span id="lib-game-genre">Аркада</span></div>
+                                                <div class="spec-row"><strong>Игровой движок:</strong> <span>HTML5 Canvas / Vanilla JS</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. PROFILE VIEW -->
+            <section id="profile-view" class="view-section">
+                <div class="profile-layout">
+                    <!-- Left: Card profile -->
+                    <div class="profile-sidebar">
+                        <div class="profile-card">
+                            <div class="avatar-container">
+                                <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Gamer" alt="Avatar" class="profile-avatar" id="profile-avatar-img">
+                                <div class="avatar-overlay" id="change-avatar-btn">Сменить</div>
+                            </div>
+                            <div class="profile-info-edit">
+                                <input type="text" id="profile-username-input" class="profile-username-input" value="VaporPlayer" title="Нажмите, чтобы изменить">
+                                <span class="profile-status online">В сети</span>
+                            </div>
+                            <div class="profile-stats-row">
+                                <div class="p-stat">
+                                    <span class="p-stat-val" id="profile-games-count">0</span>
+                                    <span class="p-stat-label">Игр</span>
+                                </div>
+                                <div class="p-stat">
+                                    <span class="p-stat-val" id="profile-total-ach">0</span>
+                                    <span class="p-stat-label">Ачивок</span>
+                                </div>
+                                <div class="p-stat">
+                                    <span class="p-stat-val" id="profile-total-time">0м</span>
+                                    <span class="p-stat-label">Сыграно</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wallet Deposit Module -->
+                        <div class="profile-panel wallet-panel">
+                            <h3 class="panel-header">Пополнить баланс Vapor</h3>
+                            <p class="panel-subtitle">Используйте виртуальные средства для покупки платных игр в магазине.</p>
+                            <div class="deposit-buttons">
+                                <button class="btn btn-deposit" data-amount="200">+ ₽200</button>
+                                <button class="btn btn-deposit" data-amount="500">+ ₽500</button>
+                                <button class="btn btn-deposit" data-amount="1000">+ ₽1000</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Feed (achievements, reviews written) -->
+                    <div class="profile-main">
+                        <!-- Navigation in Profile -->
+                        <div class="profile-nav-tabs">
+                            <button class="p-tab active" data-target="p-achievements">Мои Достижения</button>
+                            <button class="p-tab" data-target="p-reviews">Мои Отзывы</button>
+                        </div>
+
+                        <!-- Profile Content Area -->
+                        <div class="profile-tab-content">
+                            <!-- Achievements Grid -->
+                            <div id="p-achievements" class="p-tab-panel active">
+                                <div class="profile-ach-grid" id="profile-ach-grid">
+                                    <!-- Dynamic achievement items from all games -->
+                                </div>
+                            </div>
+
+                            <!-- User reviews written list -->
+                            <div id="p-reviews" class="p-tab-panel">
+                                <div class="profile-reviews-list" id="profile-reviews-list">
+                                    <!-- Dynamic list of user written reviews -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. CART VIEW -->
+            <section id="cart-view" class="view-section">
+                <div class="cart-layout">
+                    <div class="cart-items-column">
+                        <h2 class="section-title">Ваша корзина покупок</h2>
+                        <div class="cart-items-list" id="cart-items-container">
+                            <!-- Cart items dynamically rendered -->
+                        </div>
+                    </div>
+
+                    <div class="cart-checkout-column">
+                        <div class="checkout-summary-panel">
+                            <h3 class="panel-header">Сумма заказа</h3>
+                            <div class="summary-row">
+                                <span>Товары (<span id="cart-items-count">0</span>):</span>
+                                <span id="cart-total-price">₽0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>НДС (0%):</span>
+                                <span>₽0.00</span>
+                            </div>
+                            <div class="spec-divider"></div>
+                            <div class="summary-row total">
+                                <span>Итого к оплате:</span>
+                                <span class="total-price" id="cart-checkout-total">₽0.00</span>
+                            </div>
+                            
+                            <div class="checkout-actions">
+                                <button class="btn btn-primary btn-checkout" id="btn-purchase">КУПИТЬ ДЛЯ СЕБЯ</button>
+                                <button class="btn btn-secondary btn-clear-cart" id="btn-clear-cart">Очистить корзину</button>
+                            </div>
+
+                            <p class="checkout-notice">
+                                При нажатии кнопки «Купить для себя» средства будут списаны с вашего виртуального счета Vapor, и игры мгновенно появятся в вашей Библиотеке.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-divider"></div>
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <span class="logo-text">VAPOR<sup>©</sup></span>
+                </div>
+                <div class="footer-text">
+                    <p>© 2026 Vapor Corporation. Все права защищены. Все торговые марки являются собственностью их соответствующих владельцев. Эта платформа является учебным проектом в стиле Steam.</p>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">Соглашение подписчика</a> | 
+                        <a href="#" class="footer-link">Политика конфиденциальности</a> | 
+                        <a href="#" class="footer-link">Согласие на cookies</a> | 
+                        <a href="#" class="footer-link">Поддержка</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 5. GAME DETAIL MODAL -->
+    <div class="modal-overlay" id="game-detail-modal" style="display: none;">
+        <div class="modal-container">
+            <button class="modal-close" id="close-detail-modal">&times;</button>
+            <div class="modal-body" id="detail-modal-content">
+                <!-- Dynamically populated detail template -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. IMMERSIVE ARCADE GAME CABINET OVERLAY -->
+    <div class="arcade-overlay" id="arcade-cabinet" style="display: none;">
+        <div class="cabinet-container">
+            <!-- Cabinet Header / Neon Banner -->
+            <div class="cabinet-header">
+                <div class="cabinet-decor decoration-left">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="cabinet-marquee">
+                    <h2 class="arcade-title" id="arcade-game-title">VAPOR ARCADE</h2>
+                </div>
+                <div class="cabinet-decor decoration-right">
+                    <span></span><span></span><span></span>
+                </div>
+                <button class="cabinet-exit-btn" id="exit-arcade-btn">ВЫЙТИ ИЗ ИГРЫ</button>
+            </div>
+
+            <!-- Arcade Canvas Screen Container -->
+            <div class="arcade-screen-bezel">
+                <div class="arcade-screen-glare"></div>
+                <div class="arcade-screen-content">
+                    <canvas id="game-canvas" width="800" height="600"></canvas>
+                    
+                    <!-- Retro Start/Pause Screen -->
+                    <div class="arcade-screen-overlay" id="arcade-start-screen">
+                        <div class="overlay-glow-logo" id="arcade-overlay-game-title">ИГРА</div>
+                        <p class="arcade-subtext blinking" id="arcade-overlay-prompt">НАЖМИТЕ ENTER ДЛЯ СТАРТА</p>
+                        
+                        <div class="arcade-controls-guide" id="arcade-controls-guide">
+                            <!-- Controls guide text filled in programmatically -->
+                        </div>
+                    </div>
+
+                    <!-- Game Over / Victory Screen -->
+                    <div class="arcade-screen-overlay" id="arcade-gameover-screen" style="display: none;">
+                        <h2 class="gameover-text blinking" id="gameover-title">ИГРА ОКОНЧЕНА</h2>
+                        <p class="score-text">ВАШ РЕЗУЛЬТАТ: <span id="gameover-score-val">0</span></p>
+                        <p class="arcade-subtext">НАЖМИТЕ ENTER, ЧТОБЫ НАЧАТЬ ЗАНОВО</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cabinet Dashboard / Controller Mock -->
+            <div class="cabinet-dashboard">
+                <div class="dash-joystick-side">
+                    <div class="joystick-base">
+                        <div class="joystick-shaft" id="joy-shaft">
+                            <div class="joystick-knob"></div>
+                        </div>
+                    </div>
+                    <span class="dash-label">ДВИЖЕНИЕ (СТРЕЛКИ / WASD)</span>
+                </div>
+                <div class="dash-info-screen">
+                    <div class="mini-hud">
+                        <div class="hud-stat">
+                            <span class="hud-label">СЧЕТ</span>
+                            <span class="hud-val" id="arcade-hud-score">00000</span>
+                        </div>
+                        <div class="hud-stat">
+                            <span class="hud-label">РЕКОРД</span>
+                            <span class="hud-val" id="arcade-hud-highscore">00000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dash-buttons-side">
+                    <div class="arcade-buttons">
+                        <button class="arc-btn arc-btn-red" id="arc-btn-action">A</button>
+                        <button class="arc-btn arc-btn-yellow" id="arc-btn-space">SPACE</button>
+                    </div>
+                    <span class="dash-label">СТРЕЛЬБА / ДЕЙСТВИЕ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast system -->
+    <div class="notification-container" id="toast-container"></div>
+
+    <!-- Avatar Picker Dialog -->
+    <div class="modal-overlay" id="avatar-modal" style="display: none;">
+        <div class="avatar-modal-container">
+            <h3 class="panel-header">Выберите аватар игрока</h3>
+            <div class="avatar-options-grid" id="avatar-options">
+                <!-- Avatars loaded dynamically from JS -->
+            </div>
+            <button class="btn btn-secondary" id="close-avatar-modal" style="margin-top: 15px; width: 100%;">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Background music and sounds triggers -->
+    <audio id="bgm-player" loop></audio>
+
+    <!-- Main Module Loading -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

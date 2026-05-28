@@ -1,0 +1,14 @@
+{
+  "name": "vapor-steam-games",
+  "version": "1.0.0",
+  "description": "Steam-like Vapor Web Application with 3 playable HTML5 Canvas games",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}
