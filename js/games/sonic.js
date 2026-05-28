@@ -50,8 +50,16 @@ export class NeonSonic {
 
         this.stats = {
             ringsCollected: 0,
-            springsTriggered: 0
+            springsTriggered: 0,
+            bossDefeated: false
         };
+
+        // Boss state
+        this.boss = null;
+        this.bossProjectiles = [];
+        this.bossSpawned = false;
+        this.bossDefeated = false;
+        this.bossSpawnTime = 30; // seconds until boss appears
 
         this.setupInput();
     }
@@ -92,7 +100,11 @@ export class NeonSonic {
         this.checkStripeOffset = 0;
         this.lastTime = performance.now();
 
-        this.stats = { ringsCollected: 0, springsTriggered: 0 };
+        this.stats = { ringsCollected: 0, springsTriggered: 0, bossDefeated: false };
+        this.boss = null;
+        this.bossProjectiles = [];
+        this.bossSpawned = false;
+        this.bossDefeated = false;
 
         this.player = {
             x: 150,
@@ -345,10 +357,49 @@ export class NeonSonic {
             this.spawnInterval = Math.max(700, 1300 - (this.speedX * 45));
         }
 
-        // Achievement
+        // Achievement: survival
         if (this.gameTime >= 20.0) {
             this.onAchievement('sonic_speed', 'Звуковой барьер', 'Выжить более 20 секунд на полной скорости');
         }
+
+        // Boss spawn check
+        if (!this.bossSpawned && !this.bossDefeated && this.gameTime >= this.bossSpawnTime) {
+            this.spawnBoss();
+        }
+
+        // Boss update
+        if (this.boss) {
+            this.updateBoss(dt);
+        }
+
+        // Boss projectiles
+        this.bossProjectiles.forEach((proj, idx) => {
+            proj.x += proj.vx;
+            proj.y += proj.vy;
+            proj.vy += 0.18; // gravity
+            proj.anim = (proj.anim || 0) + 0.12;
+
+            // Hit floor
+            if (proj.y > this.floorY + 10) {
+                this.createExplosion(proj.x, this.floorY, '#ff6600', 8);
+                this.bossProjectiles.splice(idx, 1);
+                return;
+            }
+
+            // Hit player
+            const dist = Math.hypot(proj.x - this.player.x, proj.y - this.player.y);
+            if (dist < this.player.radius + proj.radius) {
+                if (this.player.isHitInvincible <= 0) {
+                    if (this.player.ringsOwned > 0) {
+                        this.scatterRingsLose();
+                    } else {
+                        this.gameOver();
+                        return;
+                    }
+                }
+                this.bossProjectiles.splice(idx, 1);
+            }
+        });
 
         // Particles
         this.particles.forEach((p, idx) => {
@@ -357,6 +408,154 @@ export class NeonSonic {
             p.alpha -= p.decay;
             if (p.alpha <= 0) this.particles.splice(idx, 1);
         });
+    }
+
+    spawnBoss() {
+        this.bossSpawned = true;
+        this.speedX = 0; // Stop scrolling during boss fight!
+        this.hazards = [];
+        this.rings = [];
+        this.springs = [];
+        const W = this.canvas.width;
+        this.boss = {
+            x: W + 80,         // enters from right
+            y: 160,
+            targetX: W - 180,  // hover position
+            hp: 6,
+            maxHp: 6,
+            phase: 'enter',    // enter → fight → defeated
+            hoverT: 0,         // sine wave timer
+            hitFlash: 0,       // flash frames on hit
+            attackTimer: 0,
+            attackInterval: 2200, // ms between attacks
+            laserActive: false,
+            laserTimer: 0,
+            width: 100,
+            height: 70
+        };
+        // Warn the player with a dramatic sound
+        audio.playTone(80, 'sawtooth', 0.5, 0.3, 120);
+        setTimeout(() => audio.playTone(60, 'sawtooth', 0.5, 0.3, 80), 400);
+    }
+
+    updateBoss(dt) {
+        const boss = this.boss;
+        const W = this.canvas.width;
+        const p = this.player;
+
+        boss.hoverT += dt * 0.002;
+        if (boss.hitFlash > 0) boss.hitFlash--;
+
+        // ── Phase: Enter ──────────────────────────────────────────────────
+        if (boss.phase === 'enter') {
+            boss.x += (boss.targetX - boss.x) * 0.04;
+            if (Math.abs(boss.x - boss.targetX) < 4) {
+                boss.x = boss.targetX;
+                boss.phase = 'fight';
+                boss.attackTimer = 0;
+            }
+            return;
+        }
+
+        // ── Phase: Fight ──────────────────────────────────────────────────
+        if (boss.phase === 'fight') {
+            // Hover sine wave (vertical)
+            boss.y = 120 + Math.sin(boss.hoverT * 2.2) * 60;
+
+            // Drift left/right menacingly
+            boss.x = boss.targetX + Math.sin(boss.hoverT * 0.8) * 40;
+
+            boss.attackTimer += dt;
+            if (boss.attackTimer >= boss.attackInterval) {
+                boss.attackTimer = 0;
+                this.bossAttack();
+            }
+
+            // ── Vulnerability check: Sonic hits underside ─────────────────
+            const bossBottom = boss.y + boss.height;
+            const bossLeft = boss.x;
+            const bossRight = boss.x + boss.width;
+
+            if (p.vy < -2 &&                           // Sonic moving up
+                p.x + p.radius > bossLeft + 10 &&
+                p.x - p.radius < bossRight - 10 &&
+                p.y - p.radius < bossBottom &&
+                p.y - p.radius > boss.y + boss.height * 0.5) {
+
+                if (boss.hitFlash <= 0) {
+                    boss.hp--;
+                    boss.hitFlash = 30;
+                    p.vy = this.jumpForce * 0.7; // bounce Sonic back down
+                    audio.playTone(440, 'square', 0.3, 0.12, 880);
+                    this.createExplosion(boss.x + boss.width / 2, boss.y + boss.height, '#ff6600', 16);
+
+                    if (boss.hp <= 0) {
+                        this.defeatBoss();
+                    }
+                }
+            }
+        }
+    }
+
+    bossAttack() {
+        const boss = this.boss;
+        const type = Math.random();
+
+        if (type < 0.5) {
+            // Drop 3 bombs in a spread
+            for (let i = -1; i <= 1; i++) {
+                this.bossProjectiles.push({
+                    x: boss.x + boss.width / 2 + i * 20,
+                    y: boss.y + boss.height,
+                    vx: i * 1.5 - 1,
+                    vy: 1,
+                    radius: 9,
+                    type: 'bomb',
+                    anim: 0
+                });
+            }
+            audio.playTone(200, 'sawtooth', 0.2, 0.1, 100);
+        } else {
+            // Fire a fast laser ball
+            this.bossProjectiles.push({
+                x: boss.x,
+                y: boss.y + boss.height / 2,
+                vx: -5,
+                vy: (this.player.y - (boss.y + boss.height / 2)) / 80,
+                radius: 7,
+                type: 'laser',
+                anim: 0
+            });
+            audio.playTone(600, 'sine', 0.15, 0.08, 1200);
+        }
+    }
+
+    defeatBoss() {
+        const boss = this.boss;
+        boss.phase = 'defeated';
+        this.bossDefeated = true;
+        this.speedX = 5.5; // resume scrolling
+
+        // Big explosion sequence
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                if (!this.running) return;
+                this.createExplosion(
+                    boss.x + Math.random() * boss.width,
+                    boss.y + Math.random() * boss.height,
+                    ['#ff6600', '#ffcc00', '#ff0055', '#fff'][Math.floor(Math.random() * 4)],
+                    20
+                );
+                audio.playTone(100 + i * 60, 'sawtooth', 0.4, 0.15);
+            }, i * 200);
+        }
+
+        this.score += 5000;
+        this.onScore(this.score);
+        this.onAchievement('sonic_boss', 'Победитель Эггмана', 'Победить Доктора Эггмана в финальной схватке и спасти зверей!');
+
+        // Remove boss after animation
+        setTimeout(() => { this.boss = null; this.bossProjectiles = []; }, 1200);
     }
 
     // ─── Drawing ────────────────────────────────────────────────────────────
